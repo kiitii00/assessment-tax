@@ -1,14 +1,16 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
-	"net/http"
+	"log"
+
+	"github.com/kiitii00/assessment-tax/routes"
 )
 
 func main() {
-	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, Go Bootcamp!")
-	})
-	e.Logger.Fatal(e.Start(":1323"))
+
+	echo := routes.SetupRoutes()
+	err := echo.Start((":8080"))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
