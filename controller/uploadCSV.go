@@ -2,11 +2,13 @@ package controller
 
 import (
 	"encoding/csv"
-	_"fmt"
+	"fmt"
+	_ "fmt"
 	"io"
 	"net/http"
-	_"os"
+	_ "os"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -53,15 +55,19 @@ func UploadTaxFile(c echo.Context) error {
 		}
 
 		// Parse CSV fields
-		totalIncome, err := strconv.ParseFloat(record[0], 64)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Invalid totalIncome in CSV record")
-		}
-		wht, err := strconv.ParseFloat(record[1], 64)
+		totalIncome, err := strconv.ParseFloat(strings.TrimSpace(record[0]), 64)
+		//fmt.Println(totalIncome)
+		fmt.Println("record", strings.TrimSpace(record[0]))
+		fmt.Println("record", strings.TrimSpace(record[1]))
+		fmt.Println("record", strings.TrimSpace(record[2]))
 		if err != nil {
 			return err
 		}
-		donation, err := strconv.ParseFloat(record[2], 64)
+		wht, err := strconv.ParseFloat(strings.TrimSpace(record[1]), 64)
+		if err != nil {
+			return err
+		}
+		donation, err := strconv.ParseFloat(strings.TrimSpace(record[2]), 64)
 		if err != nil {
 			return err
 		}
@@ -80,12 +86,12 @@ func UploadTaxFile(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"taxes": taxes})
 }
 
-
 func calculateTax(totalIncome, wht, donation float64) float64 {
+	fmt.Println("calculateTax",totalIncome,wht,donation)
 	// Calculate taxable income (total income minus WHT and donation)
 	totalDeductions := 60000.0
 	taxableIncome := totalIncome - wht - donation - totalDeductions
-	
+
 	// Tax rates for different income levels
 	var taxRate float64
 

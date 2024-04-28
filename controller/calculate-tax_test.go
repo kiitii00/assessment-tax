@@ -1,9 +1,15 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
 	"testing"
-
+	_"strings"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -103,3 +109,65 @@ func TestCalculateTax(t *testing.T) {
 		})
 	}
 }
+
+func TestUploadTaxFile(t *testing.T) {
+	// Prepare a sample CSV file content
+	csvContent := `totalIncome,wht,donation
+	500000,0,0
+	600000,40000,20000
+	750000,50000,15000`
+
+	// Create a request body with the sample CSV content
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("taxFile", "taxes.csv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	part.Write([]byte(csvContent))
+	writer.Close()
+
+	// Create a mock HTTP request
+	req := httptest.NewRequest(http.MethodPost, "/upload-csv", body)
+	req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+
+	// Create a mock HTTP response recorder
+	rec := httptest.NewRecorder()
+
+	// Create a new Echo instance
+	e := echo.New()
+
+	// Create a context for the request
+	c := e.NewContext(req, rec)
+	fmt.Println("c",c)
+	// Call the UploadTaxFile handler
+	if err := UploadTaxFile(c); err != nil {
+		t.Fatalf("failed to upload tax file: %v", err)
+	}
+	
+	// Check the response status code
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	// Define the expected response body
+	expectedResponse := []Tax{
+		{TotalIncome: 500000, Tax: 29000},
+		{TotalIncome: 600000, Tax: 33000},
+		{TotalIncome: 750000, Tax: 53750},
+	}
+
+	// Unmarshal the response body JSON
+	var response struct {
+		Taxes []Tax `json:"taxes"`
+	}
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	if err != nil {
+		t.Fatalf("failed to unmarshal response body: %v", err)
+	}
+	// fmt.Println("t",t)
+	// fmt.Println("expectedResponse",expectedResponse)
+	// fmt.Println("response.Taxes",response.Taxes)
+	// Check the response body against the expected response
+	assert.ElementsMatch(t, expectedResponse, response.Taxes)
+	
+}
+
