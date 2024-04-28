@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -23,35 +24,43 @@ type TaxCalculationResult struct {
 	TaxRefund float64 `json:"taxRefund"`
 }
 
-// commit#1
 // HandleTaxCalculations handles the HTTP POST request for tax calculations
 func HandleTaxCalculations(c echo.Context) error {
-	// Parse request body
 	var input TaxCalculationInput
 	if err := c.Bind(&input); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	//.Println("commit#1")
-	// Perform tax calculation
+
 	result := CalculateTax(input)
 
-	// Return JSON response
 	return c.JSON(http.StatusOK, result)
 }
 
-// calculateTax calculates tax based on the input data
+// CalculateTax calculates tax based on the input data
 func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 	totalDeductions := 60000.0
 
-	//Add up all allowances
+	// Add up all allowances
+	// for _, allowance := range input.Allowances {
+	// 	totalDeductions += allowance.Amount
+	// }
 	for _, allowance := range input.Allowances {
-		totalDeductions += allowance.Amount
+		if allowance.AllowanceType == "donation" && allowance.Amount > 100000 {
+			totalDeductions += 100000
+		} else {
+			totalDeductions += allowance.Amount
+		}
+		fmt.Println(totalDeductions)
+	}
+
+	// Ensure minimum tax reduction for personal deduction
+	if totalDeductions < 10000 {
+		totalDeductions = 10000
 	}
 
 	// Calculate taxable income
-
 	taxableIncome := input.TotalIncome - totalDeductions
-
+	fmt.Println(taxableIncome)
 	// Calculate tax
 	var tax float64
 
@@ -75,6 +84,7 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 	// 	} else {
 	// 		tax -= allowance.Amount
 	// 	}
+	// 	//fmt.Println(tax)
 	// }
 
 	// // Ensure minimum tax reduction for personal deduction
@@ -83,18 +93,18 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 	// }
 
 	// Calculate tax refund
-	// taxRefund := 0.0
-	// if input.TotalIncome-totalDeductions-input.WHT < 0 {
-	// 	taxRefund = -(input.TotalIncome - totalDeductions - input.WHT - tax)
+	taxRefund := 0.0
+	if input.TotalIncome-totalDeductions-input.WHT < 0 {
+		taxRefund = -(input.TotalIncome - totalDeductions - input.WHT - tax)
+	}
+
+	// tax -= input.WHT
+	// if tax < 0 {
+	// 	tax = 0
 	// }
 
-	tax -= input.WHT
-	if tax < 0 {
-		tax = 0
-	}
 	return TaxCalculationResult{
-
 		Tax:       tax,
-		//TaxRefund: taxRefund,
+		TaxRefund: taxRefund,
 	}
 }
