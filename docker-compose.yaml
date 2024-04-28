@@ -1,9 +1,23 @@
+version: '3.8'
+
 services:
-  postgres:
-    image: postgres:16
+  app:
+    build: .
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ktaxes
-    ports:
-      - '5432:5432'
+      GIN_MODE: release
+      PORT: 8080
+      ADMIN_USERNAME: adminTax
+      ADMIN_PASSWORD: admin!
+
+      DATABASE_URL: postgres://yiwovvbc:hpXxlhfd23PHotpuDQkHjmelSHBE3FBZ@rain.db.elephantsql.com/yiwovvbc
+    ports: 
+        - "8080:8080"
+    depends_on: 
+        - db
+ 
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: mhxzvtem
+      POSTGRES_PASSWORD: Fu3zMMOsZuiRERnb5s7gPcEHwMxukDDV
+      POSTGRES_DB: Assessment-Tax
