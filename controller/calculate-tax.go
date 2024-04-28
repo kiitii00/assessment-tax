@@ -7,6 +7,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type TaxLevel struct {
+	Level string  `json:"level"`
+	Tax   float64 `json:"tax"`
+}
 type TaxCalculationInput struct {
 	TotalIncome float64     `json:"totalIncome"`
 	WHT         float64     `json:"wht"`
@@ -21,6 +25,7 @@ type Allowance struct {
 
 type TaxCalculationResult struct {
 	Tax       float64 `json:"tax"`
+	TaxLevels []TaxLevel `json:"taxLevels"`
 	TaxRefund float64 `json:"taxRefund"`
 }
 
@@ -61,20 +66,33 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 	// Calculate taxable income
 	taxableIncome := input.TotalIncome - totalDeductions
 	fmt.Println(taxableIncome)
+
+	taxLevels := []TaxLevel{
+		{Level: "0-150,000", Tax: 0.0},
+		{Level: "150,001-500,000", Tax: 0.0},
+		{Level: "500,001-1,000,000", Tax: 0.0},
+		{Level: "1,000,001-2,000,000", Tax: 0.0},
+		{Level: "2,000,001 ขึ้นไป", Tax: 0.0},
+	}
 	// Calculate tax
 	var tax float64
 
 	switch {
 	case taxableIncome <= 150000:
+		taxLevels[0].Tax = 0
 		tax = 0
 	case taxableIncome <= 500000:
-		tax = (taxableIncome - 150000) * 0.10
+		taxLevels[1].Tax = (taxableIncome - 150000) * 0.10
+		tax = taxLevels[1].Tax
 	case taxableIncome <= 1000000:
-		tax = (500000-150000)*0.10 + (taxableIncome-500000)*0.15
+		taxLevels[2].Tax = (taxableIncome - 500000) * 0.15
+		tax = taxLevels[2].Tax
 	case taxableIncome <= 2000000:
-		tax = (500000-150000)*0.10 + (1000000-500000)*0.15 + (taxableIncome-1000000)*0.20
+		taxLevels[3].Tax = (taxableIncome - 1000000) * 0.20
+		tax = taxLevels[3].Tax
 	default:
-		tax = (500000-150000)*0.10 + (1000000-500000)*0.15 + (2000000-1000000)*0.20 + (taxableIncome-2000000)*0.35
+		taxLevels[4].Tax = (taxableIncome - 2000000) * 0.35
+		tax = taxLevels[4].Tax
 	}
 
 	// Apply maximum tax reduction for donation
@@ -93,10 +111,10 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 	// }
 
 	// Calculate tax refund
-	taxRefund := 0.0
-	if input.TotalIncome-totalDeductions-input.WHT < 0 {
-		taxRefund = -(input.TotalIncome - totalDeductions - input.WHT - tax)
-	}
+	// taxRefund := 0.0
+	// if input.TotalIncome-totalDeductions-input.WHT < 0 {
+	// 	taxRefund = -(input.TotalIncome - totalDeductions - input.WHT - tax)
+	// }
 
 	// tax -= input.WHT
 	// if tax < 0 {
@@ -105,6 +123,6 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 
 	return TaxCalculationResult{
 		Tax:       tax,
-		TaxRefund: taxRefund,
+		TaxLevels: taxLevels,
 	}
 }
