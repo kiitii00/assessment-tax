@@ -1,48 +1,49 @@
 package routes
 
 import (
-    "net/http"
+	"net/http"
 
-    "github.com/kiitii00/assessment-tax/controller"
-    "github.com/labstack/echo/v4"
+	"github.com/kiitii00/assessment-tax/controller"
+	"github.com/labstack/echo/v4"
 )
 
 func SetupRoutes() *echo.Echo {
-    e := echo.New()
-    e.POST("/tax/calculations", controller.HandleTaxCalculations)
-    e.POST("/admin/deductions/personal", HandlePersonalDeduction)
-    e.POST("/admin/deductions/k-receipt", HandlekReceipt)  
-    return e
+	e := echo.New()
+	e.POST("/tax/calculations", controller.HandleTaxCalculations)
+	e.POST("/admin/deductions/personal", HandlePersonalDeduction)
+	e.POST("/admin/deductions/k-receipt", HandlekReceipt)
+	e.POST("tax/calculations/upload-csv", controller.UploadTaxFile)
+	return e
 }
 
 func HandlePersonalDeduction(c echo.Context) error {
-    type RequestBody struct {
-        Amount float64 `json:"amount"`
-    }
+	type RequestBody struct {
+		Amount float64 `json:"amount"`
+	}
 
-    var reqBody RequestBody
-    if err := c.Bind(&reqBody); err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-    }
+	var reqBody RequestBody
+	if err := c.Bind(&reqBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
-    // Process deduction logic
-    personalDeduction := reqBody.Amount
+	// Process deduction logic
+	personalDeduction := reqBody.Amount
 
-    return c.JSON(http.StatusOK, map[string]float64{"personalDeduction": personalDeduction})
+	return c.JSON(http.StatusOK, map[string]float64{"personalDeduction": personalDeduction})
 }
 
 func HandlekReceipt(c echo.Context) error {
-    type RequestBody struct {
-        Amount float64 `json:"amount"`
-    }
+	type RequestBody struct {
+		Amount float64 `json:"amount"`
+	}
 
-    var reqBody RequestBody
-    if err := c.Bind(&reqBody); err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-    }
+	var reqBody RequestBody
+	if err := c.Bind(&reqBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
-    // Process deduction logic
-    kReceiptDeduction := reqBody.Amount
+	// Process deduction logic
+	kReceiptDeduction := reqBody.Amount
 
-    return c.JSON(http.StatusOK, map[string]float64{"kReceipt": kReceiptDeduction})
+	return c.JSON(http.StatusOK, map[string]float64{"kReceipt": kReceiptDeduction})
 }
