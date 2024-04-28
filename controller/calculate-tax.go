@@ -44,20 +44,30 @@ func HandleTaxCalculations(c echo.Context) error {
 // CalculateTax calculates tax based on the input data
 func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 	totalDeductions := 60000.0
-
+	kReceiptFound := false
 	// Add up all allowances
 	// for _, allowance := range input.Allowances {
 	// 	totalDeductions += allowance.Amount
 	// }
 	for _, allowance := range input.Allowances {
-		if allowance.AllowanceType == "donation" && allowance.Amount > 100000 {
+		if allowance.AllowanceType == "k-receipt" {
+			kReceiptFound = true
+			if allowance.Amount > 50000 {
+				totalDeductions += 50000
+			} else {
+				totalDeductions += allowance.Amount
+			}
+		} else if allowance.AllowanceType == "donation" && allowance.Amount > 100000 {
 			totalDeductions += 100000
 		} else {
 			totalDeductions += allowance.Amount
 		}
-		fmt.Println(totalDeductions)
+		
+		fmt.Println(allowance.Amount,"$")
 	}
-
+	if !kReceiptFound {
+		totalDeductions += 50000.0
+	}
 	// Ensure minimum tax reduction for personal deduction
 	if totalDeductions < 10000 {
 		totalDeductions = 10000
