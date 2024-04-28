@@ -24,9 +24,9 @@ type Allowance struct {
 }
 
 type TaxCalculationResult struct {
-	Tax       float64 `json:"tax"`
+	Tax       float64    `json:"tax"`
 	TaxLevels []TaxLevel `json:"taxLevels"`
-	TaxRefund float64 `json:"taxRefund"`
+	TaxRefund float64    `json:"taxRefund"`
 }
 
 // HandleTaxCalculations handles the HTTP POST request for tax calculations
@@ -48,6 +48,7 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 	// Add up all allowances
 	// for _, allowance := range input.Allowances {
 	// 	totalDeductions += allowance.Amount
+	// fmt.Println("ลดหย่อน:",totalDeductions)
 	// }
 	for _, allowance := range input.Allowances {
 		if allowance.AllowanceType == "k-receipt" {
@@ -62,11 +63,11 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 		} else {
 			totalDeductions += allowance.Amount
 		}
-		
-		fmt.Println(allowance.Amount,"$")
+
+		fmt.Println("ลดหย่อน:", totalDeductions, "$")
 	}
 	if !kReceiptFound {
-		totalDeductions += 50000.0
+		totalDeductions += 0.0
 	}
 	// Ensure minimum tax reduction for personal deduction
 	if totalDeductions < 10000 {
@@ -105,31 +106,7 @@ func CalculateTax(input TaxCalculationInput) TaxCalculationResult {
 		tax = taxLevels[4].Tax
 	}
 
-	// Apply maximum tax reduction for donation
-	// for _, allowance := range input.Allowances {
-	// 	if allowance.AllowanceType == "donation" && allowance.Amount > 100000 {
-	// 		tax -= 100000
-	// 	} else {
-	// 		tax -= allowance.Amount
-	// 	}
-	// 	//fmt.Println(tax)
-	// }
-
-	// // Ensure minimum tax reduction for personal deduction
-	// if totalDeductions < 10000 {
-	// 	totalDeductions = 10000
-	// }
-
-	// Calculate tax refund
-	// taxRefund := 0.0
-	// if input.TotalIncome-totalDeductions-input.WHT < 0 {
-	// 	taxRefund = -(input.TotalIncome - totalDeductions - input.WHT - tax)
-	// }
-
-	// tax -= input.WHT
-	// if tax < 0 {
-	// 	tax = 0
-	// }
+	tax -= input.WHT
 
 	return TaxCalculationResult{
 		Tax:       tax,
